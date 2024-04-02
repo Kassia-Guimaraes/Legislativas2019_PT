@@ -7,6 +7,7 @@ import numpy as np
 overall2019_df = pd.read_csv('./modificatedData/overall2019.csv', sep=',')
 parishes2019_df = pd.read_csv('./modificatedData/parishes2019.csv', sep=',')
 result_parishes2019_df = pd.read_csv('./modificatedData/result_parishes2019.csv', sep=',')
+party_info_df = pd.read_csv('./modificatedData/parties.csv', sep=',')
 
 
 def errorCodes(typeError):
@@ -73,26 +74,10 @@ def getUserFiltersLoop(df, toFilter, messange): #return array with all filters t
                 else: #new selection filters
                     print("\n")
                     continue
-
-            elif input_value == index+3:# to finish
-                while True:
-                    allfilters_value = int(input(f"\nDeseja continuar com estes filtros {theSelectedFilters}?\n\033[1m1 \033[0;0mSim\n\033[1m2 \033[0;0mNão\nSelecione uma opção: "))
-                    match allfilters_value:
-                        case 1: #confirm selection all terms
-                            print(f"\n\033[0;0mFiltros selecionados: {theSelectedFilters} \033[0;0m\n")
-                            break
-                        case 2: #return to choice the filters
-                            break  # Break out of the loop without changing theSelectedFilters
-                        case _: #error code
-                            print(errorCodes("Entrada incorreta"))
-                if allfilters_value == 1: #before confirmation about selection all filters
-                    break
-                else: #new selection filters
-                    print("\n")
-                    continue
-
+            
             else: # if choice 0, abort all
-                break
+                return theSelectedFilters
+            
         except: #errorCodes
             print('\n\n')
     return theSelectedFilters #return de array with all selected filters
@@ -131,11 +116,11 @@ def locationFilter(df, locationChoice):
                     parishes_choices.append(element)
                 parishes_choices = list(set(parishes_choices))
                 
-                other_parishes = int(input(f'Freguesias selecionadas {parishes_choices}\nDeseja selecionar mais alguma freguesia?\n1 Sim\n2 Não\nSelecione um número: '))
+                other_parishes = int(input(f'\nFreguesias selecionadas {parishes_choices}\n\nDeseja selecionar mais alguma freguesia?\n1 Sim\n2 Não\nSelecione um número: '))
                 while other_parishes != 1 and other_parishes!=2:
                     print(errorCodes('Entrada Invalida'))
                     
-                    other_parishes = int(input(f'Freguesias selecionadas {parishes_choices}\nDeseja selecionar mais alguma freguesia?\n1 Sim\n2 Não\nSelecione um número: '))
+                    other_parishes = int(input(f'\n\nDeseja selecionar mais alguma freguesia?\n1 Sim\n2 Não\nSelecione um número: '))
                 
                 if other_parishes == 2:
                     return parishes_choices                
@@ -236,45 +221,75 @@ def barGraphic(df, columnX, axisX, axisY):
     plt.show()
 
 
-def funcionalidade1(df): 
+def votesParty2019(df): 
     parties = getUserFiltersLoop(result_parishes2019_df, result_parishes2019_df['Partido'].drop_duplicates(), 'os partidos') # list with selected parties
     print(f'\nAgora que já escolheu os partidos basta escolher a localidade que deseja visualizar\n')
 
     place = userFilter(['Freguesia', 'Concelho', 'Distrito', 'Região'], 'a localidade')
     locations = locationFilter(df, place) # list with selected localities
 
+    print(f'\nQue dados deseja visualizar?\n')
+    type_votes = userFilter(['Percentagem','Percentagem de Votos Válidos','Votos'], 'os dados de visualização')
+
     location_df = pd.DataFrame()
-    for locality, party in zip(locations, parties):
-        location_df = pd.concat([location_df, df[(df[place]==locality) & (df['Partido']==party)]], axis=0) #filtered dataFrame
+    for locality in locations:
+        for party in parties:
+            location_df = pd.concat([location_df, df[(df[place]==locality) & (df['Partido']==party)]], axis=0) #filtered dataFrame
+
+    labels = []
+    for party_acronym in parties:
+        party_name = party_info_df.loc[party_info_df['Partido'] == party_acronym, 'Nome'].iloc[0]  #Find party name
+        label = f'{party_acronym} - {party_name}'
+        labels.append(label)
+
+    if type_votes == 'Votos':    
+        #groupby([columns name to group])[element to view].sum/mean()
+        analisis_groupby = location_df.groupby([place, 'Partido'])[type_votes].sum().unstack()
+
+        plt.figure(figsize=(10, 6))
+        bar_width = 0.1
+        position = bar_width/2
+
+        for i, party in enumerate(parties):
+            position_element = [x + i * bar_width - position for x in range(len(analisis_groupby.index))]
+            plt.bar(position_element, analisis_groupby[party], width=bar_width, label=party)
+
+        plt.xlabel(place)
+        plt.ylabel(f'Número de {type_votes}')
+        plt.title(f'{type_votes} por Partido em {place}')
+        plt.xticks(range(len(analisis_groupby.index)), analisis_groupby.index, rotation=70)
+        plt.legend(title='Legenda', labels=labels)
+        plt.tight_layout()
+
+        plt.show()
     
-    plt.figure(figsize=(10, 6))
+    else:
+        #groupby([columns name to group])[element to view].sum/mean()
+        analisis_groupby = location_df.groupby([place, 'Partido'])[type_votes].mean().unstack()
 
-    width = 0.2
-    pos = np.arange(len(locations))
+        plt.figure(figsize=(10, 6))
+        bar_width = 0.1
+        position = bar_width/2
 
-    for i, party in enumerate(parties):
-        data_party = location_df[location_df['Partido']==party]
-        pos = [j + i * width for j in range(len(locations))]
-        pos = list(map(lambda x: [x], pos))
-        pos = [p[0] for p in pos]
-        plt.bar(pos, data_party['Votos'], width, label=party)
+        for i, party in enumerate(parties):
+            position_element = [x + i * bar_width - position for x in range(len(analisis_groupby.index))]
+            plt.bar(position_element, analisis_groupby[party], width=bar_width, label=party)
 
-    plt.xlabel('Localidades')
-    plt.ylabel('Votos')
-    plt.title('Votos por Partido e Local')
-    plt.xticks([p + width / 2 for p in range(len(locations))], locations)
-    plt.legend()
-    plt.tight_layout()
+        plt.xlabel(place)
+        plt.ylabel(f'Média da {type_votes}')
+        plt.title(f'{type_votes} por Partido em {place}')
+        plt.xticks(range(len(analisis_groupby.index)), analisis_groupby.index, rotation=70)
 
-    # Exibir o gráfico
-    plt.show()
+        plt.legend(title='Legenda', labels=[f'{party_acronym} - {party_name}' for party_acronym, party_name in zip(parties, party_info_df['Nome'])])
+        plt.tight_layout()
+
+        plt.show()
 
     return location_df
 
-funcionalidade1(result_parishes2019_df)
+votesParty2019(result_parishes2019_df)
 
 #barGraphic(result_parishes2019_df, 'Partido', ['PS', 'CH'], 'Votos')
 
 #barChart(overall2019_df, axisX='Distrito', axisY='Votos Nulos')
 #user_filters = getUserFiltersLoop(overall2019_df, overall2019_df.columns.tolist())
-    

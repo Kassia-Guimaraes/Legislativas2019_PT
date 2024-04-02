@@ -20,7 +20,9 @@ regioes = {
     'Vila Real': 'Norte',
     'Viseu': 'Centro',
     'Açores':'Açores',
-    'Madeira':'Madeira'
+    'Madeira':'Madeira',
+    'Ilha Terceira':'Açores',
+    'Ilha Graciosa': 'Açores'
 }
 
 
@@ -64,6 +66,7 @@ parishes2019_df.to_csv('./modificatedData/parishes2019.csv', index=False)
 result_parishes2019_df = pd.read_csv('./oldDataSet/legislativas2019/votes_parishes.csv', sep=',')
 
 result_parishes2019_df = result_parishes2019_df.rename(columns={"Trade":'Freguesia',"Party":'Partido',"Percentage":'Percentagem',"validVotesPercentage":'Percentagem de Votos Válidos',"Votes":'Votos',"Council":'Concelho',"District":'Distrito'})
+
 
 result_parishes2019_df['Região'] = result_parishes2019_df['Distrito'].map(regioes)
 
@@ -143,4 +146,4 @@ partido_cor ={
 parties_df['Nome'] = parties_df['Partido'].map(partido_nome)
 parties_df['Cor'] = parties_df['Partido'].map(partido_cor)
 
-parties_df.to_csv('./modificatedData/paties.csv', index=False)
+parties_df.to_csv('./modificatedData/parties.csv', index=False)
