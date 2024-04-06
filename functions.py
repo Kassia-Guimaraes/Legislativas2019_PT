@@ -5,6 +5,8 @@ import numpy as np
 
 ## overall2019
 overall2019_df = pd.read_csv('./modificatedData/overall2019.csv', sep=',')
+overall2019_df['Data'] = pd.to_datetime(overall2019_df['Data'], format='%Y-%m-%d %H:%M:%S')
+
 parishes2019_df = pd.read_csv('./modificatedData/parishes2019.csv', sep=',')
 result_parishes2019_df = pd.read_csv('./modificatedData/result_parishes2019.csv', sep=',')
 party_info_df = pd.read_csv('./modificatedData/parties.csv', sep=',')
@@ -167,60 +169,6 @@ def locationFilter(df, locationChoice):
         region_choices = getUserFiltersLoop(df, df['Região'].drop_duplicates().to_list(), 'a região')
         return region_choices
 
-#axis categorical variable, axis Y numeric variable
-def barChart(df, axisX, axisY):
-
-    if 'data' in df.columns.to_list(): #if the dataframe has a column called 'data'
-        df['data'] = pd.to_datetime(df['data'])
-        
-        df['day'] = df['date'].dt.to_period('D')
-        df['month'] = df['date'].dt.to_period('M')
-        df['year'] = df['date'].dt.to_period('Y')
-
-    if 'Distrito' in df.columns.to_list() and 'Território Nacional' in df['Distrito'].to_list(): #if the dataFrame has a collumns called 'territoryFullName' and if this column has 'National Territory'
-        df = df.drop(df[df['Distrito'] == 'Território Nacional'].index)
-
-    print(f'AxisX {df[axisX]}\nAxisY {df[axisY]}')
-    plt.figure(figsize=(10, 6))
-    plt.bar(df[axisX], df[axisY])
-    plt.title(f'Número de {axisY} por {axisX}')
-    plt.xlabel(axisX)
-    plt.ylabel(axisY)
-
-    plt.xticks(rotation=70)  # Rotaciona os rótulos do eixo x para facilitar a leitura
-    # Formatando a escala do eixo y para não usar notação científica
-    plt.ticklabel_format(style='plain', axis='y')
-    plt.grid(axis='y')  # Adiciona grades apenas no eixo y
-    plt.tight_layout()  # Ajusta automaticamente os espaços para evitar sobreposição de elementos
-    plt.show()
-
-def barGraphic(df, columnX, axisX, axisY):
-
-    if 'data' in df.columns.to_list(): #if the dataframe has a column called 'data'
-        df['data'] = pd.to_datetime(df['data'])
-        
-        df['day'] = df['date'].dt.to_period('D')
-        df['month'] = df['date'].dt.to_period('M')
-        df['year'] = df['date'].dt.to_period('Y')
-
-    toX = pd.DataFrame()
-    for element in axisX:
-        toX = pd.concat([toX, (df[df[columnX]==element])], axis=0)
-    
-    plt.figure(figsize=(10, 6))
-    plt.bar(toX[columnX], toX[axisY])
-    plt.title(f'Número de {axisY} por {columnX}')
-    plt.xlabel(columnX)
-    plt.ylabel(axisY)
-
-    plt.xticks(rotation=70)  # Rotaciona os rótulos do eixo x para facilitar a leitura
-    # Formatando a escala do eixo y para não usar notação científica
-    plt.ticklabel_format(style='plain', axis='y')
-    plt.grid(axis='y')  # Adiciona grades apenas no eixo y
-    plt.tight_layout()  # Ajusta automaticamente os espaços para evitar sobreposição de elementos
-    plt.show()
-
-
 def votesParty2019(df): 
     parties = getUserFiltersLoop(result_parishes2019_df, result_parishes2019_df['Partido'].drop_duplicates(), 'os partidos') # list with selected parties
     print(f'\nAgora que já escolheu os partidos basta escolher a localidade que deseja visualizar\n')
@@ -228,7 +176,7 @@ def votesParty2019(df):
     place = userFilter(['Freguesia', 'Concelho', 'Distrito', 'Região'], 'a localidade')
     locations = locationFilter(df, place) # list with selected localities
 
-    print(f'\nQue dados deseja visualizar?\n')
+    print(f'\nQue \033[95mdados\033[0;0m deseja visualizar?\n')
     type_votes = userFilter(['Percentagem','Percentagem de Votos Válidos','Votos'], 'os dados de visualização')
 
     location_df = pd.DataFrame()
@@ -237,7 +185,7 @@ def votesParty2019(df):
             location_df = pd.concat([location_df, df[(df[place]==locality) & (df['Partido']==party)]], axis=0) #filtered dataFrame
 
     labels = []
-    for party_acronym in parties:
+    for party_acronym in parties: #creating legend with parties name
         party_name = party_info_df.loc[party_info_df['Partido'] == party_acronym, 'Nome'].iloc[0]  #Find party name
         label = f'{party_acronym} - {party_name}'
         labels.append(label)
@@ -250,9 +198,14 @@ def votesParty2019(df):
         bar_width = 0.1
         position = bar_width/2
 
-        for i, party in enumerate(parties):
+        for i, party in enumerate(parties): #bar plot
             position_element = [x + i * bar_width - position for x in range(len(analisis_groupby.index))]
-            plt.bar(position_element, analisis_groupby[party], width=bar_width, label=party)
+            party_color = party_info_df[party_info_df['Partido']==party]['Cor'].iloc[0] #add color by party
+            
+            plt.bar(position_element, analisis_groupby[party], width=bar_width, label=party, color=party_color)
+
+            for x, y in zip(position_element, analisis_groupby[party]):
+                plt.text(x, y, f'{y:.1f}', ha='center', va='bottom', rotation=80, fontsize=8, color='black')
 
         plt.xlabel(place)
         plt.ylabel(f'Número de {type_votes}')
@@ -271,23 +224,253 @@ def votesParty2019(df):
         bar_width = 0.1
         position = bar_width/2
 
-        for i, party in enumerate(parties):
+        for i, party in enumerate(parties): #bar plot
             position_element = [x + i * bar_width - position for x in range(len(analisis_groupby.index))]
-            plt.bar(position_element, analisis_groupby[party], width=bar_width, label=party)
+            party_color = party_info_df[party_info_df['Partido']==party]['Cor'].iloc[0] #add color by party    
 
+            plt.bar(position_element, analisis_groupby[party], width=bar_width, label=party, color=party_color)
+
+            for x, y in zip(position_element, analisis_groupby[party]):
+                plt.text(x, y, f'{y:.1f}', ha='center', va='bottom', rotation=80, fontsize=8, color='black')
+                
         plt.xlabel(place)
         plt.ylabel(f'Média da {type_votes}')
         plt.title(f'{type_votes} por Partido em {place}')
         plt.xticks(range(len(analisis_groupby.index)), analisis_groupby.index, rotation=70)
 
-        plt.legend(title='Legenda', labels=[f'{party_acronym} - {party_name}' for party_acronym, party_name in zip(parties, party_info_df['Nome'])])
+        plt.legend(title='Legenda', labels=labels)
         plt.tight_layout()
 
         plt.show()
 
     return location_df
 
-votesParty2019(result_parishes2019_df)
+#votesParty2019(result_parishes2019_df)
+
+def geographicVotes(df):
+    place = userFilter(['Freguesia', 'Concelho', 'Distrito', 'Região'], 'a localidade')
+    locations = locationFilter(df, place) # list with selected locality
+
+    print(f'\nQue \033[95mdados\033[0;0m deseja visualizar?\n')
+    type_votes = userFilter(['Votos Brancos','Percentagem Votos Brancos','Votos Nulos','Percentagem Votos Nulos','Percentagem Votantes','Votantes Inscritos','Total de Votos'], 'os dados de visualização')
+
+    df_filtered = pd.DataFrame()
+    for locality in locations: 
+        df_filtered = pd.concat([df_filtered, df[(df[place]==locality)]])
+
+
+    if place == 'Freguesia':
+
+        plt.figure(figsize=(10, 6))
+        bar_chart = plt.bar(df_filtered[place], df_filtered[type_votes], width=0.1)
+
+        for bar in bar_chart: #add number of votes on bars
+            height = bar.get_height()
+            plt.text(bar.get_x() + bar.get_width() / 2, height, '{:,.0f}'.format(height),
+                        ha='center', va='bottom', fontsize=10, color='black')
+
+        plt.xlabel(place)
+        plt.ylabel(f'Número de {type_votes}')
+        plt.title(f'{type_votes} por {place}')
+        plt.xticks(rotation=70)
+        #plt.legend()
+        plt.tight_layout()
+
+        plt.show()
+
+        return df_filtered
+
+
+    else: #if not parishe
+        grouping_votes = pd.DataFrame(columns=[place, type_votes])
+        grouping_votes = grouping_votes.dropna()
+        if 'Percentagem' not in type_votes: #if votes sum all votes in locality
+            
+            for locality in locations:
+
+                sum_votes = df_filtered[df_filtered[place]==locality][type_votes].sum()
+                new_row = pd.DataFrame({place:[locality], type_votes:[sum_votes]})
+                if not grouping_votes.empty:
+                    grouping_votes = pd.concat([grouping_votes.dropna(), new_row], ignore_index=True) 
+                else:
+                    grouping_votes = new_row.copy()
+            
+            print('\nComo deseja \033[95mvisualizar os votos\033[0;0m?\n')
+            format_votes = userFilter(['De todos os habitantes','A cada 10 habitantes', 'A cada 100 habitantes', 'A cada mil habitantes'], 'a visualização dos votos por habitante')
+
+            if format_votes=='A cada 10 habitantes':
+                grouping_votes[type_votes] = grouping_votes[type_votes]/10
+            elif format_votes=='A cada 100 habitantes':
+                grouping_votes[type_votes] = grouping_votes[type_votes]/100
+            elif format_votes=='A cada mil habitantes':
+                grouping_votes[type_votes] = grouping_votes[type_votes]/1000
+
+            plt.figure(figsize=(10, 6))
+            bar_chart = plt.bar(grouping_votes[place].dropna(), grouping_votes[type_votes], width=0.1)
+
+            for bar in bar_chart:
+                height = bar.get_height()
+                plt.text(bar.get_x() + bar.get_width() / 2, height, '{:,.0f}'.format(height),
+                         ha='center', va='bottom', fontsize=10, color='black')
+
+            plt.xlabel(place)
+            plt.ylabel(f'Número de {type_votes} ')
+            plt.title(f'{type_votes} por {place} {format_votes.lower()}')
+            plt.xticks(rotation=50)
+            #plt.legend()
+            plt.tight_layout()
+
+            plt.show()
+        
+        else: #if percentage
+
+            for locality in locations:
+
+                sum_votes = df_filtered[df_filtered[place]==locality][type_votes].mean()
+                new_row = pd.DataFrame({place:[locality], type_votes:[sum_votes]})
+                if not grouping_votes.empty:
+                    grouping_votes = pd.concat([grouping_votes.dropna(), new_row], ignore_index=True) 
+                else:
+                    grouping_votes = new_row.copy() 
+
+            plt.figure(figsize=(10, 6))
+            bar_chart = plt.bar(grouping_votes[place], grouping_votes[type_votes], width=0.1)
+
+            for bar in bar_chart:
+                height = bar.get_height()
+                plt.text(bar.get_x() + bar.get_width() / 2, height, '{:,.2f}'.format(height),
+                         ha='center', va='bottom', fontsize=10, color='black')
+
+            plt.xlabel(place)
+            plt.ylabel(f'Média de {type_votes} ')
+            plt.title(f'{type_votes} por {place}')
+            plt.xticks(rotation=50)
+            #plt.legend()
+            plt.tight_layout()
+
+            plt.show()
+
+#geographicVotes(parishes2019_df)
+
+def votesPerHour(df):
+    hours = userFilter(['Às 20:00', 'Às 21:00', 'Às 22:00', 'Às 23:00', 'Todos os horários'], 'o período da apuraçãoo dos votos')
+    
+    print(f'\nQue \033[95mlocalidade\033[0;0m deseja visualizar?\n')
+    place = userFilter(['Distrito', 'Região'], 'a localidade que deseja ver a apuração')
+    locations = locationFilter(df, place)
+
+    print(f'\nQue \033[95mdados\033[0;0m deseja visualizar?\n')
+    type_votes = userFilter(['Freguesias Apuradas','Votos Brancos','Percentagem Votos Brancos','Votos Nulos','Percentagem Votos Nulos','Percentagem Votantes','Total de Votos'], 'os dados de visualização')
+
+    if hours=='Às 20:00':
+        df = df[(df['Data'].dt.hour==20) & (df['Data'].dt.minute>9)]
+
+    elif hours=='Às 21:00':
+        df = df[(df['Data'].dt.hour==21)]
+
+    elif hours=='Às 22:00':
+        df = df[(df['Data'].dt.hour==22)]
+    
+    elif hours=='Às 23:00':
+        df = df[(df['Data'].dt.hour==23)]
+
+    location_df = pd.DataFrame()
+    for locality in locations: 
+        location_df = pd.concat([location_df, df[(df[place]==locality)]], ignore_index=True)
+
+    location_df[['Data','Hora']] = location_df['Data'].astype(str).str.split(' ').to_list()
+
+    grouping_votes = pd.DataFrame(columns=[place, type_votes])
+    if 'Percentagem' not in type_votes and 'Votos' not in type_votes: #if votes sum all votes in locality
+        
+        analisis_groupby = location_df.groupby(['Hora', place])[type_votes].sum().unstack()
+
+        plt.figure(figsize=(10, 6))
+        bar_width = 0.1
+        position = bar_width/2
+
+        for i, zone in enumerate(locations): #bar plot
+            position_element = [x + i * bar_width - position for x in range(len(analisis_groupby.index))]
+            
+            plt.bar(position_element, analisis_groupby[zone], width=bar_width, label=zone)
+
+            for x, y in zip(position_element, analisis_groupby[zone]):
+                plt.text(x, y, f'{y:.1f}', ha='center', va='bottom', rotation=85, fontsize=8, color='black')
+
+        plt.xlabel(place)
+        plt.ylabel(f'Número de {type_votes}')
+        plt.title(f'{type_votes} por Hora em {place}')
+        plt.xticks(range(len(analisis_groupby.index)), analisis_groupby.index, rotation=70)
+        plt.legend()
+        plt.tight_layout()
+
+        plt.show()
+
+    elif 'Votos' in type_votes:
+            
+            print('\nComo deseja \033[95mvisualizar os votos\033[0;0m?\n')
+            format_votes = userFilter(['De todos os habitantes','A cada 10 habitantes', 'A cada 100 habitantes', 'A cada mil habitantes'], 'a visualização dos votos por habitante')
+
+            if format_votes=='A cada 10 habitantes':
+                grouping_votes[type_votes] = grouping_votes[type_votes]/10
+            elif format_votes=='A cada 100 habitantes':
+                grouping_votes[type_votes] = grouping_votes[type_votes]/100
+            elif format_votes=='A cada mil habitantes':
+                grouping_votes[type_votes] = grouping_votes[type_votes]/1000
+            
+            plt.figure(figsize=(10, 6))
+            plt.bar(grouping_votes[place], grouping_votes[type_votes], width=0.1)
+
+            analisis_groupby = location_df.groupby(['Hora', place])[type_votes].sum().unstack()
+
+            plt.figure(figsize=(10, 6))
+            bar_width = 0.1
+            position = bar_width/2
+
+            for i, zone in enumerate(locations): #bar plot
+                position_element = [x + i * bar_width - position for x in range(len(analisis_groupby.index))]
+                
+                plt.bar(position_element, analisis_groupby[zone], width=bar_width, label=zone)
+
+                for x, y in zip(position_element, analisis_groupby[zone]):
+                    plt.text(x, y, f'{y:.1f}', ha='center', va='bottom', rotation=85, fontsize=8, color='black')
+
+            plt.xlabel(place)
+            plt.ylabel(f'Número de {type_votes}')
+            plt.title(f'{type_votes} por Hora em {place}')
+            plt.xticks(range(len(analisis_groupby.index)), analisis_groupby.index, rotation=70)
+            plt.legend()
+            plt.tight_layout()
+
+            plt.show()
+
+    else: #if percentage and not votes
+
+        analisis_groupby = location_df.groupby(['Hora', place])[type_votes].mean().unstack()
+
+        plt.figure(figsize=(10, 6))
+        bar_width = 0.1
+        position = bar_width/2
+
+        for i, zone in enumerate(locations): #bar plot
+            position_element = [x + i * bar_width - position for x in range(len(analisis_groupby.index))]
+            
+            plt.bar(position_element, analisis_groupby[zone], width=bar_width, label=zone)
+
+            for x, y in zip(position_element, analisis_groupby[zone]):
+                plt.text(x, y, f'{y:.1f}', ha='center', va='bottom', rotation=85, fontsize=8, color='black')
+
+        plt.xlabel(place)
+        plt.ylabel(f'Média de {type_votes}')
+        plt.title(f'{type_votes} por Hora em {place}')
+        plt.xticks(range(len(analisis_groupby.index)), analisis_groupby.index, rotation=70)
+        plt.legend()
+        plt.tight_layout()
+
+        plt.show()
+
+
+#votesPerHour(overall2019_df)
 
 #barGraphic(result_parishes2019_df, 'Partido', ['PS', 'CH'], 'Votos')
 

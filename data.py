@@ -29,14 +29,11 @@ regioes = {
 ### overall2019
 overall2019_df = pd.read_csv('./oldDataSet/legislativas2019/overall_results.csv', sep=',')
 
-overall2019_df[['date', 'time']] = overall2019_df['time'].str.split(' ').to_list()
-overall2019_df = overall2019_df[['date','time', 'territoryFullName', 'territoryName', 'territoryKey', 'totalMandates', 'availableMandates', 'numParishes', 'numParishesApproved', 'blankVotes', 'blankVotesPercentage', 'nullVotes', 'nullVotesPercentage', 'votersPercentage', 'subscribedVoters', 'totalVoters', 'pre.totalMandates', 'pre.availableMandates', 'pre.blankVotes', 'pre.blankVotesPercentage', 'pre.nullVotes', 'pre.nullVotesPercentage', 'pre.votersPercentage', 'pre.subscribedVoters', 'pre.totalVoters']] 
-
 overall2019_df = overall2019_df.fillna(int(0))
-overall2019_df = overall2019_df.drop(overall2019_df.loc[overall2019_df['time'] < '20:10:02'].index)
+overall2019_df = overall2019_df.drop(overall2019_df.loc[overall2019_df['territoryName']=='Território Nacional'].index)
 overall2019_df = overall2019_df.drop(['territoryFullName','pre.totalMandates', 'pre.availableMandates', 'pre.blankVotes', 'pre.blankVotesPercentage', 'pre.nullVotes', 'pre.nullVotesPercentage', 'pre.votersPercentage', 'pre.subscribedVoters', 'pre.totalVoters'], axis=1) #coluna territoryFullName = territoryName
 
-overall2019_df = overall2019_df.rename(columns={'date':'Data', 'time':'Hora', 'territoryName':'Distrito', 'territoryKey':'Código Territorial', 'totalMandates':'Total Mandatos', 'availableMandates':'Mandatos Disponíveis', 'numParishes':'Total Freguesias', 'numParishesApproved':'Freguesias Apuradas', 'blankVotes':'Votos Brancos', 'blankVotesPercentage':'Percentagem Votos Brancos', 'nullVotes':'Votos Nulos', 'nullVotesPercentage':'Percentagem Votos Nulos', 'votersPercentage':'Percentagem Votantes', 'subscribedVoters':'Votantes Inscritos', 'totalVoters':'Total de Votos'})
+overall2019_df = overall2019_df.rename(columns={'time':'Data', 'territoryName':'Distrito', 'territoryKey':'Código Territorial', 'totalMandates':'Total Mandatos', 'availableMandates':'Mandatos Disponíveis', 'numParishes':'Total Freguesias', 'numParishesApproved':'Freguesias Apuradas', 'blankVotes':'Votos Brancos', 'blankVotesPercentage':'Percentagem Votos Brancos', 'nullVotes':'Votos Nulos', 'nullVotesPercentage':'Percentagem Votos Nulos', 'votersPercentage':'Percentagem Votantes', 'subscribedVoters':'Votantes Inscritos', 'totalVoters':'Total de Votos'})
 
 overall2019_df['Região'] = overall2019_df['Distrito'].map(regioes)
 
@@ -47,14 +44,11 @@ overall2019_df.to_csv('./modificatedData/overall2019.csv', index=False)
 ### parishes2019
 parishes2019_df = pd.read_csv('./oldDataSet/legislativas2019/parishes.csv', sep=',')
 
-parishes2019_df[['date','time']] = parishes2019_df['time'].str.split(' ').to_list()
-parishes2019_df = parishes2019_df[['date','time', 'territoryFullName', 'territoryName', 'territoryKey', 'totalMandates', 'availableMandates', 'numParishes', 'numParishesApproved', 'blankVotes', 'blankVotesPercentage', 'nullVotes', 'nullVotesPercentage', 'votersPercentage', 'subscribedVoters', 'totalVoters', 'pre.totalMandates', 'pre.availableMandates', 'pre.blankVotes', 'pre.blankVotesPercentage', 'pre.nullVotes', 'pre.nullVotesPercentage', 'pre.votersPercentage', 'pre.subscribedVoters', 'pre.totalVoters', 'Council', 'District']]
-
 parishes2019_df = parishes2019_df.fillna(int(0))
 parishes2019_df = parishes2019_df.drop(parishes2019_df[['territoryFullName',"pre.totalMandates","pre.availableMandates","pre.blankVotes","pre.blankVotesPercentage","pre.nullVotes","pre.nullVotesPercentage","pre.votersPercentage","pre.subscribedVoters","pre.totalVoters"]], axis=1) #coluna territoryFullName = territoryName
 parishes2019_df = parishes2019_df.drop(parishes2019_df[["numParishes", "numParishesApproved"]], axis=1)
 
-parishes2019_df = parishes2019_df.rename(columns={'date':'Data','time':'Hora', 'territoryName':'Freguesia', 'territoryKey':'Código Territorial', 'totalMandates':'Total Mandatos', 'availableMandates':'Mandatos Disponíveis', 'blankVotes':'Votos Brancos', 'blankVotesPercentage':'Percentagem Votos Brancos', 'nullVotes':'Votos Nulos', 'nullVotesPercentage':'Percentagem Votos Nulos', 'votersPercentage':'Percentagem Votantes', 'subscribedVoters':'Votantes Inscritos', 'totalVoters':'Total de Votos', 'Council':'Concelho', 'District':'Distrito'})
+parishes2019_df = parishes2019_df.rename(columns={'time':'Data', 'territoryName':'Freguesia', 'territoryKey':'Código Territorial', 'totalMandates':'Total Mandatos', 'availableMandates':'Mandatos Disponíveis', 'blankVotes':'Votos Brancos', 'blankVotesPercentage':'Percentagem Votos Brancos', 'nullVotes':'Votos Nulos', 'nullVotesPercentage':'Percentagem Votos Nulos', 'votersPercentage':'Percentagem Votantes', 'subscribedVoters':'Votantes Inscritos', 'totalVoters':'Total de Votos', 'Council':'Concelho', 'District':'Distrito'})
 
 parishes2019_df['Região'] = parishes2019_df['Distrito'].map(regioes)
 
@@ -67,7 +61,6 @@ result_parishes2019_df = pd.read_csv('./oldDataSet/legislativas2019/votes_parish
 
 result_parishes2019_df = result_parishes2019_df.rename(columns={"Trade":'Freguesia',"Party":'Partido',"Percentage":'Percentagem',"validVotesPercentage":'Percentagem de Votos Válidos',"Votes":'Votos',"Council":'Concelho',"District":'Distrito'})
 
-
 result_parishes2019_df['Região'] = result_parishes2019_df['Distrito'].map(regioes)
 
 result_parishes2019_df.to_csv('./modificatedData/result_parishes2019.csv', index=False)
@@ -76,7 +69,7 @@ result_parishes2019_df.to_csv('./modificatedData/result_parishes2019.csv', index
 
 # parties
 
-parties = {'Partido': ['ADN','ASDI','B.E.','CDS-PP','CH','IL','L','MDP/CDE','PAN','PCP','PEV','PCP/PEV','PPD/PSD','PPM','PRD','PS','PSN','UDP','UEDS','A', 'R.I.R.','NC','PNR','PURP','PCTP/MRPP','PDR','MPT','JPP','MAS']}
+parties = {'Partido': ['ADN','ASDI','B.E.','CDS-PP','CH','IL','L','MDP/CDE','PAN','PCP','PEV','PCP-PEV','PCP/PEV','PPD/PSD','PPM','PRD','PS','PSN','UDP','UEDS','A', 'R.I.R.','NC','PNR','PURP','PCTP/MRPP','PDR','MPT','JPP','MAS']}
 
 parties_df = pd.DataFrame(parties)
 
@@ -92,7 +85,8 @@ partido_nome = {
     'PAN': 'Pessoas, Animais Natureza',
     'PCP': 'Partido Comunista Português',
     'PEV':'Partido Ecologista Os Verde',
-    'PCP/PEV':' CDU - Coligação Democrática Unitária',
+    'PCP-PEV': 'CDU - Coligação Democrática Unitária',
+    'PCP/PEV':'CDU - Coligação Democrática Unitária',
     'PPD/PSD': 'Partido Popular Democrático / Partido Social Democrático',
     'PPM':'Partido Popular Monárquico',
     'PRD':'Partido Renovação Democrática',
@@ -123,7 +117,8 @@ partido_cor ={
     'PAN': '#3D9177', #azul/verde
     'PCP': '#B20000', #vermelho
     'PEV': '#FDDA0B', #amarelo
-    'PCP/PEV':'#4F4F4F', #cinza
+    'PCP-PEV':'#4F4F4F', #cinza
+    'PCP/PEV' : '#4F4F4F', #cinza
     'PPD/PSD': '#FF6500', #laranja
     'PPM': '#2A5392', #azul
     'PRD':'#216B31', #verde
