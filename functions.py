@@ -1,12 +1,10 @@
 import pandas as pd
 import matplotlib.pyplot as plt
-import numpy as np
 
-
-## overall2019
 overall2019_df = pd.read_csv('./modificatedData/overall2019.csv', sep=',')
 overall2019_df['Data'] = pd.to_datetime(overall2019_df['Data'], format='%Y-%m-%d %H:%M:%S')
 
+parliamentary_seats_df = pd.read_csv('./eleicoes-1975-2022/mandatos-por-partido-1975-2022.csv')
 parishes2019_df = pd.read_csv('./modificatedData/parishes2019.csv', sep=',')
 result_parishes2019_df = pd.read_csv('./modificatedData/result_parishes2019.csv', sep=',')
 party_info_df = pd.read_csv('./modificatedData/parties.csv', sep=',')
@@ -42,15 +40,15 @@ def getUserFiltersLoop(df, toFilter, messange): #return array with all filters t
         index = filtersMenu(toFilter, theSelectedFilters)
         try:
             print(f"\33[0;0mFiltros selecionados: {theSelectedFilters} \33[0;0m\nSe quiser alterar a seleção apenas selecionar novamente o item") #show what filters was select
-            input_value = int(input(f"\33[0;0mEscolha um número para selecionar {messange}: \33[0;0m"))
+            input_value = input(f"\33[0;0mEscolha um número para selecionar {messange}: \33[0;0m")
 
-            if input_value != 0 and input_value != index+2 and input_value != index+3: #when 0 abort all, i+2 select all, i+3 finish
+            if int(input_value) != 0 and int(input_value) != index+2 and int(input_value) != index+3: #when 0 abort all, i+2 select all, i+3 finish
 
-                while input_value < 0 or input_value-1 > len(toFilter):
+                while int(input_value) < 0 or int(input_value)-1 > len(toFilter):
                     print(errorCodes("Entrada incorreta"))
-                    input_value = int(input(f"\33[0;0mEscolha um número para selecionar {messange}: \33[0;0m")) #request new input
+                    input_value = input(f"\33[0;0mEscolha um número para selecionar {messange}: \33[0;0m") #request new input
 
-                selection = toFilter[input_value-1] #the selecion is the input_value on index toFilter
+                selection = toFilter[int(input_value)-1] #the selecion is the input_value on index toFilter
 
                 if selection not in theSelectedFilters: #if selection wasnt select after
                     theSelectedFilters.append(selection)
@@ -58,7 +56,7 @@ def getUserFiltersLoop(df, toFilter, messange): #return array with all filters t
                     theSelectedFilters.remove(selection)
                 viewDataFrame(df[theSelectedFilters].drop_duplicates())
 
-            elif input_value == index+2: #selected all filters
+            elif int(input_value) == index+2: #selected all filters
                 while True:
                     allfilters_value = int(input(f"\nDeseja selecionar todos os filtros?\n\033[1m1 \033[0;0mSim\n\033[1m2 \033[0;0mNão\nSelecione uma opção: "))
                     match allfilters_value:
@@ -86,17 +84,20 @@ def getUserFiltersLoop(df, toFilter, messange): #return array with all filters t
 
 def userFilter(toFilter, messange):
     theSelectedFilters = []
-    for index, value in enumerate(toFilter):
-        print(f"\33[1m{index+1} \033[0;0m{value}")
-    input_value = int(input(f"\33[0;0mEscolha um número para selecionar {messange}: \33[0;0m"))
+    while True:
+        try:
+            for index, value in enumerate(toFilter):
+                print(f"\33[1m{index+1} \033[0;0m{value}")
+            input_value = input(f"\33[0;0mEscolha um número para selecionar {messange}: \33[0;0m")
 
-    while input_value <1 and input_value > len(toFilter)-1:
-        print(errorCodes("Entrada incorreta"))
-        input_value = int(input(f"\33[0;0mEscolha um número para selecionar {messange}: \33[0;0m\n"))
-    
-    theSelectedFilters = toFilter[input_value-1]
-       
-    return theSelectedFilters #return de array with all selected filters
+            while int(input_value) <1 and int(input_value) > len(toFilter)-1:
+                print(errorCodes("Entrada incorreta"))
+                input_value = int(input(f"\33[0;0mEscolha um número para selecionar {messange}: \33[0;0m\n"))
+            theSelectedFilters = toFilter[int(input_value)-1]
+
+            return theSelectedFilters #return de array with all selected filters
+        except:
+            print(errorCodes('Entrada inválida'))
 
 def locationFilter(df, locationChoice):
 
@@ -168,6 +169,38 @@ def locationFilter(df, locationChoice):
         print(f'\nEscolha as \033[95mRegiões\033[0;0m\n')
         region_choices = getUserFiltersLoop(df, df['Região'].drop_duplicates().to_list(), 'a região')
         return region_choices
+
+def choosingHour():
+    while True: #choosing hour
+        hours = input('\nQual intervalo de \033[95mhorários\033[0;0m deseja visualizar?\nA apuração dos votos é entre 20:10 do dia 06 de junho até 00:35 do dia 07 de junho\nPara escolher digite o horário formato 20:10-21:30: ')
+        hours = hours.split('-')
+
+        while len(hours)!=2:
+
+            print(errorCodes('hora inválida'))
+            hours = input('\nQue \033[95mhorários\033[0;0m deseja visualizar?\nA apuração dos votos vai desde 20:10 até 00:35 do dia 07/06\nPara escolher digite o horário formato 20:10-21:30: ')
+            hours = hours.split('-')
+
+        initial_hour = hours[0].split(':')
+        final_hour = hours[1].split(':')
+
+        while (len(initial_hour) !=2 or len(initial_hour[0])!=2 or len(initial_hour[0])!=2 or 
+            len(final_hour)!=2 or len(final_hour[0])!=2 or len(final_hour[1])!=2 or
+            (int(initial_hour[0])<20 and int(initial_hour[0])!=0) or
+            (int(initial_hour[0])>23) or (int(initial_hour[1])>59) or (int(final_hour[1])>59) or
+            (int(initial_hour[0])==20 and int(initial_hour[1])<10) or
+            (int(final_hour[0])<int(initial_hour[0]) and int(final_hour[0])!=0) or
+            (int(final_hour[0])==int(initial_hour[0]) and int(final_hour[1])<int(initial_hour[1])) or
+            (int(final_hour[0])>23)): #verification time
+
+            print(errorCodes('hora inválida'))
+            hours = input('\nQue \033[95mhorários\033[0;0m deseja visualizar?\nA apuração dos votos vai desde 20:10 até 00:35 do dia 07/06\nPara escolher digite o horário formato 20:10-21:30: ')
+            hours = hours.split('-')
+            
+            initial_hour = hours[0].split(':')
+            final_hour = hours[1].split(':')
+        
+        return initial_hour, final_hour
 
 def votesParty2019(df): 
     parties = getUserFiltersLoop(result_parishes2019_df, result_parishes2019_df['Partido'].drop_duplicates(), 'os partidos') # list with selected parties
@@ -244,8 +277,6 @@ def votesParty2019(df):
         plt.show()
 
     return location_df
-
-#votesParty2019(result_parishes2019_df)
 
 def geographicVotes(df):
     place = userFilter(['Freguesia', 'Concelho', 'Distrito', 'Região'], 'a localidade')
@@ -350,10 +381,12 @@ def geographicVotes(df):
 
             plt.show()
 
-#geographicVotes(parishes2019_df)
-
 def votesPerHour(df):
-    hours = userFilter(['Às 20:00', 'Às 21:00', 'Às 22:00', 'Às 23:00', 'Todos os horários'], 'o período da apuraçãoo dos votos')
+
+    initial_hour, final_hour = choosingHour()
+
+    df = df[((df['Data'].dt.hour>=int(initial_hour[0])) & (df['Data'].dt.minute>=int(initial_hour[1]))) &
+            ((df['Data'].dt.hour<=int(final_hour[0])) & (df['Data'].dt.minute<=int(final_hour[1])))]
     
     print(f'\nQue \033[95mlocalidade\033[0;0m deseja visualizar?\n')
     place = userFilter(['Distrito', 'Região'], 'a localidade que deseja ver a apuração')
@@ -361,18 +394,6 @@ def votesPerHour(df):
 
     print(f'\nQue \033[95mdados\033[0;0m deseja visualizar?\n')
     type_votes = userFilter(['Freguesias Apuradas','Votos Brancos','Percentagem Votos Brancos','Votos Nulos','Percentagem Votos Nulos','Percentagem Votantes','Total de Votos'], 'os dados de visualização')
-
-    if hours=='Às 20:00':
-        df = df[(df['Data'].dt.hour==20) & (df['Data'].dt.minute>9)]
-
-    elif hours=='Às 21:00':
-        df = df[(df['Data'].dt.hour==21)]
-
-    elif hours=='Às 22:00':
-        df = df[(df['Data'].dt.hour==22)]
-    
-    elif hours=='Às 23:00':
-        df = df[(df['Data'].dt.hour==23)]
 
     location_df = pd.DataFrame()
     for locality in locations: 
@@ -386,25 +407,21 @@ def votesPerHour(df):
         analisis_groupby = location_df.groupby(['Hora', place])[type_votes].sum().unstack()
 
         plt.figure(figsize=(10, 6))
-        bar_width = 0.1
-        position = bar_width/2
 
-        for i, zone in enumerate(locations): #bar plot
-            position_element = [x + i * bar_width - position for x in range(len(analisis_groupby.index))]
-            
-            plt.bar(position_element, analisis_groupby[zone], width=bar_width, label=zone)
+        for zone in locations:
+            plt.plot(analisis_groupby.index, analisis_groupby[zone], marker='o',label=zone)
 
-            for x, y in zip(position_element, analisis_groupby[zone]):
-                plt.text(x, y, f'{y:.1f}', ha='center', va='bottom', rotation=85, fontsize=8, color='black')
-
-        plt.xlabel(place)
+        plt.xlabel('Hora')
         plt.ylabel(f'Número de {type_votes}')
-        plt.title(f'{type_votes} por Hora em {place}')
-        plt.xticks(range(len(analisis_groupby.index)), analisis_groupby.index, rotation=70)
+        plt.title(f'Apuração {type_votes} por Hora em {place}')
+        plt.xticks(rotation=70)
         plt.legend()
         plt.tight_layout()
 
         plt.show()
+
+        #okok
+
 
     elif 'Votos' in type_votes:
             
@@ -419,60 +436,63 @@ def votesPerHour(df):
                 grouping_votes[type_votes] = grouping_votes[type_votes]/1000
             
             plt.figure(figsize=(10, 6))
-            plt.bar(grouping_votes[place], grouping_votes[type_votes], width=0.1)
 
             analisis_groupby = location_df.groupby(['Hora', place])[type_votes].sum().unstack()
 
-            plt.figure(figsize=(10, 6))
-            bar_width = 0.1
-            position = bar_width/2
+            for zone in locations:
+                plt.plot(analisis_groupby.index, analisis_groupby[zone], marker='o',label=zone)
 
-            for i, zone in enumerate(locations): #bar plot
-                position_element = [x + i * bar_width - position for x in range(len(analisis_groupby.index))]
-                
-                plt.bar(position_element, analisis_groupby[zone], width=bar_width, label=zone)
-
-                for x, y in zip(position_element, analisis_groupby[zone]):
-                    plt.text(x, y, f'{y:.1f}', ha='center', va='bottom', rotation=85, fontsize=8, color='black')
-
-            plt.xlabel(place)
+            plt.xlabel('Hora')
             plt.ylabel(f'Número de {type_votes}')
-            plt.title(f'{type_votes} por Hora em {place}')
-            plt.xticks(range(len(analisis_groupby.index)), analisis_groupby.index, rotation=70)
+            plt.title(f'Apuração {type_votes} por Hora em {place}')
+            plt.xticks(rotation=70)
             plt.legend()
             plt.tight_layout()
 
             plt.show()
 
+
     else: #if percentage and not votes
+
+        plt.figure(figsize=(10, 6))
 
         analisis_groupby = location_df.groupby(['Hora', place])[type_votes].mean().unstack()
 
-        plt.figure(figsize=(10, 6))
-        bar_width = 0.1
-        position = bar_width/2
+        for zone in locations:
+            plt.plot(analisis_groupby.index, analisis_groupby[zone], marker='o',label=zone)
 
-        for i, zone in enumerate(locations): #bar plot
-            position_element = [x + i * bar_width - position for x in range(len(analisis_groupby.index))]
-            
-            plt.bar(position_element, analisis_groupby[zone], width=bar_width, label=zone)
-
-            for x, y in zip(position_element, analisis_groupby[zone]):
-                plt.text(x, y, f'{y:.1f}', ha='center', va='bottom', rotation=85, fontsize=8, color='black')
-
-        plt.xlabel(place)
+        plt.xlabel('Hora')
         plt.ylabel(f'Média de {type_votes}')
-        plt.title(f'{type_votes} por Hora em {place}')
-        plt.xticks(range(len(analisis_groupby.index)), analisis_groupby.index, rotation=70)
+        plt.title(f'Apuração {type_votes} por Hora em {place}')
+        plt.xticks(rotation=70)
         plt.legend()
         plt.tight_layout()
 
         plt.show()
 
+def parliamentarySeats(df):
+    print('Escolha os anos para visualização:')
+    years = getUserFiltersLoop(df, df['Anos'].unique().tolist(), 'os anos')
 
-#votesPerHour(overall2019_df)
+    print('\nEscolha os partidos que deseja ver:')
+    parties = getUserFiltersLoop(df, df.columns[2:].tolist(), 'os partidos')
 
-#barGraphic(result_parishes2019_df, 'Partido', ['PS', 'CH'], 'Votos')
+    # Filtrar o DataFrame pelos anos e partidos selecionados
+    df_filtered = df[df['Anos'].isin(years)]
+    df_filtered = df_filtered[['Anos'] + parties]  # Selecionar apenas as colunas dos partidos selecionados
 
-#barChart(overall2019_df, axisX='Distrito', axisY='Votos Nulos')
-#user_filters = getUserFiltersLoop(overall2019_df, overall2019_df.columns.tolist())
+    # Configurações do gráfico
+    plt.figure(figsize=(10, 6))
+
+    for party in parties:
+        party_color = party_info_df[party_info_df['Partido']==party]['Cor'].iloc[0] #add color by party
+        plt.plot(df_filtered['Anos'], df_filtered[party], marker='o', label=party, color=party_color)
+
+    plt.xlabel('Anos')
+    plt.ylabel(f'Número de assentos conquistados')
+    plt.title(f'Apuração assentos conquistados por por partido pelo ano')
+    plt.xticks(rotation=70)
+    plt.legend()
+    plt.tight_layout()
+
+    plt.show()
