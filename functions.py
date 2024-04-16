@@ -1,10 +1,13 @@
 import pandas as pd
 import matplotlib.pyplot as plt
+from matplotlib.ticker import ScalarFormatter
 
 overall2019_df = pd.read_csv('./modificatedData/overall2019.csv', sep=',')
 overall2019_df['Data'] = pd.to_datetime(overall2019_df['Data'], format='%Y-%m-%d %H:%M:%S')
 
 parliamentary_seats_df = pd.read_csv('./eleicoes-1975-2022/mandatos-por-partido-1975-2022.csv')
+party_info_all = pd.read_csv('./modificatedData/parties_info_all.csv', sep=',')
+result_parties_df = pd.read_csv('./modificatedData/result_parties.csv', sep=',')
 parishes2019_df = pd.read_csv('./modificatedData/parishes2019.csv', sep=',')
 result_parishes2019_df = pd.read_csv('./modificatedData/result_parishes2019.csv', sep=',')
 party_info_df = pd.read_csv('./modificatedData/parties.csv', sep=',')
@@ -203,14 +206,14 @@ def choosingHour():
         return initial_hour, final_hour
 
 def votesParty2019(df): 
-    parties = getUserFiltersLoop(result_parishes2019_df, result_parishes2019_df['Partido'].drop_duplicates(), 'os partidos') # list with selected parties
+    parties = getUserFiltersLoop(df, df['Partido'].drop_duplicates(), 'os partidos') # list with selected parties
     print(f'\nAgora que já escolheu os partidos basta escolher a localidade que deseja visualizar\n')
 
     place = userFilter(['Freguesia', 'Concelho', 'Distrito', 'Região'], 'a localidade')
     locations = locationFilter(df, place) # list with selected localities
 
     print(f'\nQue \033[95mdados\033[0;0m deseja visualizar?\n')
-    type_votes = userFilter(['Percentagem','Percentagem de Votos Válidos','Votos'], 'os dados de visualização')
+    type_votes = userFilter(['Percentagem de Votos Válidos','Votos'], 'os dados de visualização')
 
     location_df = pd.DataFrame()
     for locality in locations:
@@ -249,7 +252,7 @@ def votesParty2019(df):
 
         plt.show()
     
-    else:
+    else: #if percentage
         #groupby([columns name to group])[element to view].sum/mean()
         analisis_groupby = location_df.groupby([place, 'Partido'])[type_votes].mean().unstack()
 
@@ -304,7 +307,7 @@ def geographicVotes(df):
         plt.ylabel(f'Número de {type_votes}')
         plt.title(f'{type_votes} por {place}')
         plt.xticks(rotation=70)
-        #plt.legend()
+        plt.legend()
         plt.tight_layout()
 
         plt.show()
@@ -348,7 +351,7 @@ def geographicVotes(df):
             plt.ylabel(f'Número de {type_votes} ')
             plt.title(f'{type_votes} por {place} {format_votes.lower()}')
             plt.xticks(rotation=50)
-            #plt.legend()
+            plt.legend()
             plt.tight_layout()
 
             plt.show()
@@ -376,7 +379,7 @@ def geographicVotes(df):
             plt.ylabel(f'Média de {type_votes} ')
             plt.title(f'{type_votes} por {place}')
             plt.xticks(rotation=50)
-            #plt.legend()
+            plt.legend()
             plt.tight_layout()
 
             plt.show()
@@ -443,7 +446,7 @@ def votesPerHour(df):
                 plt.plot(analisis_groupby.index, analisis_groupby[zone], marker='o',label=zone)
 
             plt.xlabel('Hora')
-            plt.ylabel(f'Número de {type_votes}')
+            plt.ylabel(f'Número de {type_votes} {format_votes.lower}')
             plt.title(f'Apuração {type_votes} por Hora em {place}')
             plt.xticks(rotation=70)
             plt.legend()
@@ -477,22 +480,63 @@ def parliamentarySeats(df):
     print('\nEscolha os partidos que deseja ver:')
     parties = getUserFiltersLoop(df, df.columns[2:].tolist(), 'os partidos')
 
-    # Filtrar o DataFrame pelos anos e partidos selecionados
+    # DataFrame filter years
     df_filtered = df[df['Anos'].isin(years)]
-    df_filtered = df_filtered[['Anos'] + parties]  # Selecionar apenas as colunas dos partidos selecionados
+    df_filtered = df_filtered[['Anos'] + parties]  # select parties
 
-    # Configurações do gráfico
     plt.figure(figsize=(10, 6))
 
+    labels = []
     for party in parties:
         party_color = party_info_df[party_info_df['Partido']==party]['Cor'].iloc[0] #add color by party
+
+        party_name = party_info_df.loc[party_info_df['Partido'] == party, 'Nome'].iloc[0]  #Find party name
+        label = f'{party} - {party_name}'
+        labels.append(label)
+
         plt.plot(df_filtered['Anos'], df_filtered[party], marker='o', label=party, color=party_color)
 
     plt.xlabel('Anos')
     plt.ylabel(f'Número de assentos conquistados')
     plt.title(f'Apuração assentos conquistados por por partido pelo ano')
     plt.xticks(rotation=70)
-    plt.legend()
+    plt.legend(title='Legenda', labels=labels)
     plt.tight_layout()
 
     plt.show()
+
+def votesPartyAll(df):
+
+    print('Escolha os anos para visualização:')
+    years = getUserFiltersLoop(df, df['Ano'].unique().tolist(), 'os anos')
+
+    print('\nEscolha os partidos que deseja ver:')
+    parties = getUserFiltersLoop(df, df['Partido'].drop_duplicates().tolist(), 'os partidos')
+
+    plt.figure(figsize=(10, 6))
+
+    for party in parties:
+        df_party = df[(df['Partido'] == party) & (df['Ano'].isin(years))]
+        analisis_groupby = df_party.groupby('Ano')['Total Votos'].sum()
+
+        plt.plot(analisis_groupby.index, analisis_groupby.values, marker='o', label=party)
+
+    plt.xlabel('Anos')
+    plt.ylabel('Votos Totais')
+    plt.title('Total de Votos por Ano e Partido')
+    plt.xticks(rotation=70)
+    plt.legend(title='Partido')
+    plt.tight_layout()
+
+    plt.ticklabel_format(axis='y', style='plain')
+
+    plt.tight_layout()
+    plt.show()
+
+    
+    print('\nPara entender um pouco mais sobre os partidos aqui está uma breve descrição sobre eles.\n')
+    for party_acronym in parties: #creating legend with parties name
+        party_name = party_info_all.loc[party_info_all['Partido'] == party_acronym, 'Nome'].iloc[0]  #Find party name
+        party_description = party_info_all.loc[party_info_all['Partido'] == party_acronym, 'Descrição'].iloc[0]  #Find party description
+        label = f'{party_acronym} - \033[95m{party_name}\033[0;0m: {party_description}'
+        print(f'\n{label}')

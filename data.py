@@ -142,3 +142,26 @@ parties_df['Nome'] = parties_df['Partido'].map(partido_nome)
 parties_df['Cor'] = parties_df['Partido'].map(partido_cor)
 
 parties_df.to_csv('./modificatedData/parties.csv', index=False)
+
+
+
+
+# votes_party_75-11
+votes_party_all = pd.read_csv('./oldDataSet/complementares/resultados-legislativas-1975-2011.csv', sep=',')
+
+votes_party_all['data'] = pd.to_datetime(votes_party_all['data'])
+
+votes_party_all['Ano'] = votes_party_all['data'].dt.year
+
+votes_party_all = votes_party_all.rename(columns={'codigo':'Código', 'nome':'Distrito','tipo':'Tipo','data':'Data','partido':'Partido','num_votos':'Total Votos','perc_votos':'Percentual Votos','mandatos':'Mandatos'})
+
+votes_party_all.to_csv('./modificatedData/result_parties.csv', index=False)
+
+
+
+# parties_info_all 
+parties_info_all = pd.read_csv('./eleicoes-1975-2022/parties_info_all.csv', sep=',')
+
+parties_info_all = parties_info_all[['Partido', 'Nome', 'Descrição']]
+
+parties_info_all.to_csv('./modificatedData/parties_info_all.csv', index=False)

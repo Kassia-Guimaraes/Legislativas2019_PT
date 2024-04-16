@@ -1,14 +1,6 @@
 import pandas as pd
 from functions import *
 
-overall2019_df = pd.read_csv('./modificatedData/overall2019.csv', sep=',')
-overall2019_df['Data'] = pd.to_datetime(overall2019_df['Data'], format='%Y-%m-%d %H:%M:%S')
-
-parliamentary_seats_df = pd.read_csv('./eleicoes-1975-2022/mandatos-por-partido-1975-2022.csv')
-parishes2019_df = pd.read_csv('./modificatedData/parishes2019.csv', sep=',')
-result_parishes2019_df = pd.read_csv('./modificatedData/result_parishes2019.csv', sep=',')
-party_info_df = pd.read_csv('./modificatedData/parties.csv', sep=',')
-
 welcome = '''
 
 ╔══════════════════════════════════════════════════════════════════════════════╗
@@ -38,6 +30,7 @@ main_menu = '''
 \033[1m┇ 2️⃣ \033[0;0m Distribuição geográfica dos votos                                          ┇
 \033[1m┇ 3️⃣ \033[0;0m Resultados por partido                                                     ┇
 \033[1m┇ 4️⃣ \033[0;0m Assentos ocupados por partidos desde 1975                                  ┇
+\033[1m┇ 5️⃣ \033[0;0m Votos por partidos desde 1975                                              ┇
 \033[1m┇ 0️⃣ \033[0;93m sair da Análise das Eleições\033[0;0m                                               ┇
 ================================================================================
 Por favor selecione a opção pelo número >>>  '''
@@ -72,6 +65,9 @@ while True:
         case('4'):
             print('\nNesta funcionalidade você pode ver os assentos ocupados pelos partidos políticos desde 1975 até 2022')
             parliamentarySeats(parliamentary_seats_df)
+        case('5'):
+            print('\nAqui você poderá consultar o número de votos recebido por cada partido desde 1975 até 2011')
+            votesPartyAll(result_parties_df)
         case('0'):
             print(good_bye)
             break
